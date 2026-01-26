@@ -3,6 +3,7 @@
 #include "Events.hpp"
 #include "Hooks.hpp"
 #include "Keyboard.hpp"
+#include "Memory.hpp"
 #include "ScriptData.hpp"
 #include "rage/scrThread.hpp"
 #include "rage/scrValue.hpp"
@@ -70,16 +71,30 @@ void CleanupScript()
     AUDIO::STOP_STREAM();
 
     *getGlobalPtr(g_ScriptData.Glb.AcmData) = (1 << 0);
+
+    int startTime = MISC::GET_GAME_TIMER();
     while (SCRIPT::GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH("am_mp_arc_cab_manager"_J) > 0)
+    {
+        if ((MISC::GET_GAME_TIMER() - startTime) >= 5000)
+        {
+            LOG("Timed out killing ACM script, doing it manually.");
+            MISC::TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME("am_mp_arc_cab_manager");
+            break;
+        }
+
         WAIT(0);
+    }
 
     *getGlobalPtr(g_ScriptData.Glb.AcmData) = 0;
 
     auto& coords = g_ArcadeMarkerCoords[static_cast<int>(g_Arcade.Location)];
     ENTITY::SET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), coords.x, coords.y, coords.z, FALSE, FALSE, FALSE, FALSE);
+    GRAPHICS::CLEAR_TIMECYCLE_MODIFIER(); // fix conflict with simple trainer
 
     g_Arcade.Location = eArcadeLocation::NONE;
     g_Arcade.LoadState = Arcade::eLoadState::IDLE;
+
+    LOG("Cleaned up script.");
 }
 
 void UpdateArcadeEntry()
@@ -97,6 +112,7 @@ void UpdateArcadeEntry()
         {
             g_Arcade.Location = static_cast<eArcadeLocation>(i);
             g_Arcade.LoadState = Arcade::eLoadState::FADE_OUT;
+            LOG("Player is in angled area, fading out.");
             break;
         }
     }
@@ -114,6 +130,7 @@ void ArcadeLoadStateFadeOut()
     while (!CAM::IS_SCREEN_FADED_OUT())
         WAIT(0);
 
+    LOG("Faded out, activating entity sets.");
     g_Arcade.LoadState = Arcade::eLoadState::ACTIVATE_ENTITY_SETS;
 }
 
@@ -129,6 +146,11 @@ void ArcadeLoadStateActivateEntitySets()
             INTERIOR::ACTIVATE_INTERIOR_ENTITY_SET(interior, entitySet);
 
         INTERIOR::REFRESH_INTERIOR(interior);
+        LOG("Activated entity sets, creating objects.");
+    }
+    else
+    {
+        LOG("Interior is invalid, creating objects.");
     }
 
     g_Arcade.LoadState = Arcade::eLoadState::CREATE_OBJECTS;
@@ -160,6 +182,7 @@ void ArcadeLoadStateCreateObjects()
         g_Arcade.Objects.push_back(objectIndex);
     }
 
+    LOG("Objects created, creating peds.");
     g_Arcade.LoadState = Arcade::eLoadState::CREATE_PEDS;
 }
 
@@ -244,6 +267,7 @@ void ArcadeLoadStateCreatePeds()
         arcadePed = {pedIndex, objectIndex};
     }
 
+    LOG("Peds created, requesting audio.");
     g_Arcade.LoadState = Arcade::eLoadState::REQUEST_AUDIO;
 }
 
@@ -271,6 +295,7 @@ void ArcadeLoadStateRequestAudio()
         WAIT(0);
     } while (!loaded1 || !loaded2 || !loaded3);
 
+    LOG("Audio requested, launching ACM script.");
     g_Arcade.LoadState = Arcade::eLoadState::LAUNCH_ACM_SCRIPT;
 }
 
@@ -282,6 +307,7 @@ void ArcadeLoadStateLaunchACMScript()
     if (SCRIPT::GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH("am_mp_arc_cab_manager"_J) > 0)
     {
         g_Arcade.LoadState = Arcade::eLoadState::FADE_IN;
+        LOG("ACM script is already running, fading in.");
         return;
     }
 
@@ -303,9 +329,13 @@ void ArcadeLoadStateLaunchACMScript()
         *getGlobalPtr(g_ScriptData.Glb.GpbdFm.Index + (1 + (0 * g_ScriptData.Glb.GpbdFm.Size)) + g_ScriptData.Glb.GpbdFm.PropertyData + g_ScriptData.Glb.GpbdFm.ArcCabSaveSlots + 1 + i) = static_cast<int64_t>(g_ArcadeSaveSlotData[i]); // can be overriden by the management menu later
     }
 
-    BUILTIN::START_NEW_SCRIPT_WITH_NAME_HASH_AND_ARGS("am_mp_arc_cab_manager"_J, reinterpret_cast<Any*>(&args[0]), 87, 8344);
+    if (MISC::GET_NUMBER_OF_FREE_STACKS_OF_THIS_SIZE(8344) <= 0)
+        LOGF("Warning, no free stack size. Mod won't work. This shouldn't have happened unless you're using a gameconfig that modifies the stack sizes.");
+
+    int id = BUILTIN::START_NEW_SCRIPT_WITH_NAME_HASH_AND_ARGS("am_mp_arc_cab_manager"_J, reinterpret_cast<Any*>(&args[0]), 87, 8344);
     SCRIPT::SET_SCRIPT_WITH_NAME_HASH_AS_NO_LONGER_NEEDED("am_mp_arc_cab_manager"_J);
 
+    LOGF("ACM script launched (id=%d), fading in.", id);
     g_Arcade.LoadState = Arcade::eLoadState::FADE_IN;
 }
 
@@ -321,6 +351,7 @@ void ArcadeLoadStateFadeIn()
 
     CAM::DO_SCREEN_FADE_IN(1000);
 
+    LOG("Faded in, arcade is ready.");
     g_Arcade.LoadState = Arcade::eLoadState::READY;
 }
 
@@ -572,12 +603,55 @@ bool InitScript()
         return false;
     }
 
-    MISC::SET_INSTANCE_PRIORITY_MODE(1);
-    DLC::ON_ENTER_MP();
+    bool* isEnteringSp = nullptr;
+    int* instancePriorityMode = nullptr;
 
-    g_Arcade.Blips.reserve(static_cast<size_t>(eArcadeLocation::NUM_LOCATIONS));
-    g_Arcade.Objects.reserve(NUM_ARCADE_OBJECTS);
-    g_Arcade.Peds.reserve(NUM_ARCADE_PEDS);
+    if (g_IsEnhanced)
+    {
+        if (auto addr = Memory::ScanPattern("88 1D ? ? ? ? 89 3D"))
+            isEnteringSp = addr->Add(2).Rip().As<bool*>();
+
+        if (auto addr = Memory::ScanPattern("89 0D ? ? ? ? E8 ? ? ? ? 83 FE 01"))
+            instancePriorityMode = addr->Add(2).Rip().As<int*>();
+    }
+    else
+    {
+        if (auto addr = Memory::ScanPattern("BA E2 99 8F 57 E8 ? ? ? ? 48 8B 0D"))
+            isEnteringSp = addr->Sub(0x13).Add(2).Rip().As<bool*>();
+
+        if (auto addr = Memory::ScanPattern("89 0D ? ? ? ? E8 ? ? ? ? 83 FB 01"))
+            instancePriorityMode = addr->Add(2).Rip().As<int*>();
+    }
+
+    if (isEnteringSp)
+    {
+        if (*isEnteringSp || g_IsEnhanced) // on enhanced, something sets this to 0 before us without actually loading the MP map for some reason
+        {
+            DLC::ON_ENTER_MP();
+            LOG("Loaded MP map parts.");
+        }
+        else
+        {
+            LOG("MP map parts are already loaded.");
+        }
+    }
+
+    if (instancePriorityMode)
+    {
+        if (*instancePriorityMode != 1)
+        {
+            MISC::SET_INSTANCE_PRIORITY_MODE(1);
+            LOG("Set instance priority mode to 1.");
+        }
+        else
+        {
+            LOG("Instance priority mode is already set.");
+        }
+    }
+
+    g_Arcade.Blips.resize(static_cast<size_t>(eArcadeLocation::NUM_LOCATIONS), NULL);
+    g_Arcade.Objects.resize(NUM_ARCADE_OBJECTS, NULL);
+    g_Arcade.Peds.resize(NUM_ARCADE_PEDS, {});
 
     LOG("Script initialized successfully.");
     return true;
