@@ -181,7 +181,6 @@ void LaunchScripts()
         loaded2 = SCRIPT::HAS_SCRIPT_WITH_NAME_HASH_LOADED("arcade_seating"_J);
         loaded3 = SCRIPT::HAS_SCRIPT_WITH_NAME_HASH_LOADED("ob_jukebox"_J);
         loaded4 = SCRIPT::HAS_SCRIPT_WITH_NAME_HASH_LOADED("am_mp_arc_cab_manager"_J);
-        SCRIPT::REQUEST_SCRIPT_WITH_NAME_HASH("am_mp_arcade"_J);
         SCRIPT::REQUEST_SCRIPT_WITH_NAME_HASH("am_mp_arcade_peds"_J);
         SCRIPT::REQUEST_SCRIPT_WITH_NAME_HASH("arcade_seating"_J);
         SCRIPT::REQUEST_SCRIPT_WITH_NAME_HASH("ob_jukebox"_J);
@@ -437,17 +436,17 @@ bool Init()
 
 void ScriptMain()
 {
-    auto gameVersion = getGameVersion();
-    if (gameVersion < eGameVersion::VER_1_0_2944_0)
+    g_GameVersion = getGameVersion();
+    if (g_GameVersion < eGameVersion::VER_1_0_2944_0)
     {
-        LOGF("Unsupported game version: %d", static_cast<int>(gameVersion));
+        LOGF("Unsupported game version: %d", static_cast<int>(g_GameVersion));
         return;
     }
 
-    if (gameVersion > 1000)
+    if (g_GameVersion > 1000)
         g_IsEnhanced = true;
 
-    LOGF("Game type is %s. Game version is %d.", g_IsEnhanced ? "Enhanced" : "Legacy", static_cast<int>(gameVersion));
+    LOGF("Game type is %s. Game version is %d.", g_IsEnhanced ? "Enhanced" : "Legacy", static_cast<int>(g_GameVersion));
 
     if (!Init())
         return;

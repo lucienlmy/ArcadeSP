@@ -140,7 +140,7 @@ enum eGameVersion : int
     VER_1_0_678_1_NOSTEAM,
     VER_1_0_757_2_STEAM,
     VER_1_0_757_2_NOSTEAM,
-    VER_1_0_757_3_STEAM,
+    VER_1_0_757_4_STEAM,
     VER_1_0_757_4_NOSTEAM,
     VER_1_0_791_2_STEAM,
     VER_1_0_791_2_NOSTEAM,
@@ -218,20 +218,17 @@ enum eGameVersion : int
     VER_1_0_3570_0,
     VER_1_0_3586_0,
     VER_1_0_3717_0,
-    VER_1_0_3725_0,
+    VER_1_0_3751_0,
 
-    VER_LEGACY_SIZE,
-
-    VER_EN_1_0_812_8 = 1001,
+    VER_EN_1_0_811_8 = 1001,
+    VER_EN_1_0_812_8,
     VER_EN_1_0_813_11,
     VER_EN_1_0_814_9,
     VER_EN_1_0_889_15,
     VER_EN_1_0_889_19,
     VER_EN_1_0_889_22,
     VER_EN_1_0_1013_17,
-    VER_EN_1_0_1013_20,
-
-    VER_ENHANCED_SIZE,
+    VER_EN_1_0_1013_29,
 
     VER_UNK = -1
 };

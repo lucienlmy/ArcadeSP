@@ -16,6 +16,7 @@
 
 #include "Logger.hpp"
 
+extern eGameVersion g_GameVersion;
 extern bool g_IsEnhanced;
 
 constexpr uint32_t Joaat(const std::string_view str)
