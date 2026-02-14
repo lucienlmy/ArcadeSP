@@ -15,6 +15,7 @@
     <ClInclude Include="src\Memory.hpp" />
     <ClInclude Include="src\Script.hpp" />
     <ClInclude Include="src\ScriptData.hpp" />
+    <ClInclude Include="src\ScriptFunction.hpp" />
     <ClInclude Include="src\rage\atArray.hpp">
       <Filter>rage</Filter>
     </ClInclude>
@@ -30,6 +31,9 @@
     <ClInclude Include="src\rage\scrThread.hpp">
       <Filter>rage</Filter>
     </ClInclude>
+    <ClInclude Include="src\rage\scrThreadContext.hpp">
+      <Filter>rage</Filter>
+    </ClInclude>	
     <ClInclude Include="src\rage\scrValue.hpp">
       <Filter>rage</Filter>
     </ClInclude>
@@ -42,7 +46,8 @@
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Memory.cpp" />
     <ClCompile Include="src\Script.cpp" />
-    <ClCompile Include="src\ScriptData.cpp" />	
+    <ClCompile Include="src\ScriptData.cpp" />
+    <ClCompile Include="src\ScriptFunction.cpp" />
     <ClCompile Include="src\rage\scrNativeRegistration.cpp">
       <Filter>rage</Filter>
     </ClCompile>

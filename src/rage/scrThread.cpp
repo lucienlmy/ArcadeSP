@@ -4,6 +4,16 @@
 
 namespace rage
 {
+    scrThread*& scrThread::GetCurrentThread()
+    {
+        return *reinterpret_cast<scrThread**>(*reinterpret_cast<uintptr_t*>(__readgsqword(0x58)) + (g_IsEnhanced ? 0x7A0 : 0x2A50));
+    }
+
+    void scrThread::SetCurrentThreadActive(bool active)
+    {
+        *reinterpret_cast<bool*>(*reinterpret_cast<uintptr_t*>(__readgsqword(0x58)) + (g_IsEnhanced ? 0x7A8 : 0x2A58)) = active;
+    }
+
     scrThread* scrThread::GetThread(uint32_t hash)
     {
         static bool init = [] {
@@ -26,7 +36,7 @@ namespace rage
 
         for (auto& thread : *m_Threads)
         {
-            if (thread && thread->GetProgramHash() == hash)
+            if (thread && *thread->Context()->Id() && *thread->ScriptHash() == hash)
                 return thread;
         }
 

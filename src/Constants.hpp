@@ -3,28 +3,6 @@
 constexpr int NUM_ARCADE_LOCATIONS = 6;
 constexpr int NUM_ARCADE_OBJECTS = 6;
 
-enum class eArcadeCabinet
-{
-    INVALID = -1,
-    GG_SPACE_MONKEY,
-    BADLANDS_REVENGE,
-    WIZARDS_RUIN,
-    RACE_N_CHASE_STREET,
-    RACE_N_CHASE_TRUCKIN,
-    RACE_N_CHASE_ROCKET,
-    DEFENDER_OF_THE_FAITH,
-    MONKEYS_PARADISE,
-    PENETRATOR,
-    INVADE_AND_PERSUADE,
-    STREET_CRIMES,
-    NAZAR_SPEAKS,
-    SWK_CLAW,
-    LOVE_PROFESSOR,
-    AXE_OF_FURY,
-    QUB3D,
-    CAMHEDZ
-};
-
 enum class eArcadeSaveSlot
 {
     INVALID,
@@ -48,74 +26,6 @@ enum class eArcadeSaveSlot
     AXE_OF_FURY = 21,
     QUB3D,
     CAMHEDZ
-};
-
-struct ArcadeObjectData
-{
-    Hash ObjectModel;
-    Vector3 Coords;
-    float Heading;
-};
-
-constexpr const char* g_ArcadeEntitySets[] = {
-    "entity_set_constant_geometry",
-    "entity_set_arcade_set_ceiling_beams",
-    "entity_set_mural_option_07",
-    "entity_set_floor_option_05",
-    "entity_set_mural_neon_option_03",
-    "entity_set_arcade_set_trophy_claw",
-    "entity_set_arcade_set_trophy_love",
-    "entity_set_arcade_set_trophy_teller",
-    "entity_set_arcade_set_trophy_gunner",
-    "entity_set_arcade_set_trophy_king",
-    "entity_set_arcade_set_trophy_racer",
-    "entity_set_arcade_set_trophy_patriot",
-    "entity_set_arcade_set_trophy_monkey",
-    "entity_set_arcade_set_trophy_brawler",
-    "entity_set_arcade_set_trophy_retro",
-    "entity_set_arcade_set_trophy_cabs",
-    "entity_set_arcade_set_trophy_strife",
-    "entity_set_plushie_01",
-    "entity_set_plushie_02",
-    "entity_set_plushie_03",
-    "entity_set_plushie_04",
-    "entity_set_plushie_05",
-    "entity_set_plushie_06",
-    "entity_set_plushie_07",
-    "entity_set_plushie_08",
-    "entity_set_plushie_09",
-    "entity_set_big_screen",
-    "entity_set_screens"
-};
-
-constexpr eControl g_ControlsToDisable[] = {
-    eControl::ControlWeaponWheelNext,
-    eControl::ControlWeaponWheelPrev,
-    eControl::ControlSelectNextWeapon,
-    eControl::ControlSelectPrevWeapon,
-    eControl::ControlJump,
-    eControl::ControlAttack,
-    eControl::ControlAim,
-    eControl::ControlDuck,
-    eControl::ControlSelectWeapon,
-    eControl::ControlCover,
-    eControl::ControlTalk,
-    eControl::ControlDetonate,
-    eControl::ControlWeaponSpecial,
-    eControl::ControlWeaponSpecial2,
-    eControl::ControlMeleeAttackLight,
-    eControl::ControlMeleeAttackHeavy,
-    eControl::ControlMeleeAttackAlternate,
-    eControl::ControlMeleeBlock,
-    eControl::ControlSelectWeaponUnarmed,
-    eControl::ControlSelectWeaponMelee,
-    eControl::ControlSelectWeaponHandgun,
-    eControl::ControlSelectWeaponShotgun,
-    eControl::ControlSelectWeaponSmg,
-    eControl::ControlSelectWeaponAutoRifle,
-    eControl::ControlSelectWeaponSniper,
-    eControl::ControlSelectWeaponHeavy,
-    eControl::ControlSelectWeaponSpecial
 };
 
 constexpr Vector3 g_ArcadeBlipCoords[] = {
@@ -163,50 +73,6 @@ constexpr std::pair<Vector3, float> g_ArcadeExitCoords[] = {
     }
 };
 
-constexpr eArcadeCabinet g_ArcadeCabinets[] = {
-    eArcadeCabinet::SWK_CLAW,
-    eArcadeCabinet::AXE_OF_FURY,
-    eArcadeCabinet::LOVE_PROFESSOR,
-    eArcadeCabinet::STREET_CRIMES,
-    eArcadeCabinet::STREET_CRIMES,
-    eArcadeCabinet::STREET_CRIMES,
-    eArcadeCabinet::STREET_CRIMES,
-    eArcadeCabinet::BADLANDS_REVENGE,
-    eArcadeCabinet::INVALID,
-    eArcadeCabinet::NAZAR_SPEAKS,
-    eArcadeCabinet::GG_SPACE_MONKEY,
-    eArcadeCabinet::INVADE_AND_PERSUADE,
-    eArcadeCabinet::WIZARDS_RUIN,
-    eArcadeCabinet::CAMHEDZ,
-    eArcadeCabinet::INVALID,
-    eArcadeCabinet::RACE_N_CHASE_ROCKET,
-    eArcadeCabinet::INVALID,
-    eArcadeCabinet::STREET_CRIMES,
-    eArcadeCabinet::STREET_CRIMES,
-    eArcadeCabinet::STREET_CRIMES,
-    eArcadeCabinet::STREET_CRIMES,
-    eArcadeCabinet::PENETRATOR,
-    eArcadeCabinet::DEFENDER_OF_THE_FAITH,
-    eArcadeCabinet::MONKEYS_PARADISE,
-    eArcadeCabinet::DEFENDER_OF_THE_FAITH,
-    eArcadeCabinet::PENETRATOR,
-    eArcadeCabinet::GG_SPACE_MONKEY,
-    eArcadeCabinet::WIZARDS_RUIN,
-    eArcadeCabinet::INVADE_AND_PERSUADE,
-    eArcadeCabinet::QUB3D,
-    eArcadeCabinet::RACE_N_CHASE_TRUCKIN,
-    eArcadeCabinet::INVALID,
-    eArcadeCabinet::QUB3D,
-    eArcadeCabinet::WIZARDS_RUIN,
-    eArcadeCabinet::GG_SPACE_MONKEY,
-    eArcadeCabinet::INVALID,
-    eArcadeCabinet::INVALID,
-    eArcadeCabinet::INVALID,
-    eArcadeCabinet::INVALID,
-    eArcadeCabinet::INVALID,
-    eArcadeCabinet::INVALID
-};
-
 constexpr eArcadeSaveSlot g_ArcadeSaveSlots[] = {
     eArcadeSaveSlot::SWK_CLAW,
     eArcadeSaveSlot::AXE_OF_FURY,
@@ -249,37 +115,4 @@ constexpr eArcadeSaveSlot g_ArcadeSaveSlots[] = {
     eArcadeSaveSlot::INVALID,
     eArcadeSaveSlot::INVALID,
     eArcadeSaveSlot::INVALID
-};
-
-constexpr ArcadeObjectData g_ArcadeObjects[] = {
-    {
-        "ch_prop_arcade_fortune_door_01a"_J,
-        {2727.9114f, -371.9659f, -48.3982f},
-        0.0f
-    },
-    {
-        "ch_prop_laptop_01a"_J,
-        {2726.5452f, -376.4341f, -47.6f},
-        0.0f
-    },
-    {
-        "sm_prop_smug_offchair_01a"_J,
-        {2726.55f, -377.3595f, -47.8f},
-        -175.0f
-    },
-    {
-        "sum_prop_sum_trophy_ripped_01a"_J,
-        {2726.85f, -376.332f, -47.6f},
-        330.0f
-    },
-    {
-        "sum_prop_sum_trophy_qub3d_01a"_J,
-        {2726.14f, -376.372f, -47.6f},
-        30.0f
-    },
-    {
-        "tr_prop_tr_trophy_camhedz_01a"_J,
-        {2726.735f, -375.982f, -47.6f},
-        0.0f
-    }
 };

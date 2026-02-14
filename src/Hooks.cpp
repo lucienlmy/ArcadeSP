@@ -17,6 +17,11 @@ std::unordered_map<int, SyncedSceneInfo> g_Scenes;
 void* g_InitNativeTables = nullptr;
 void (*g_InitNativeTablesOriginal)(rage::scrProgram* program) = nullptr;
 
+void Return2Detour(rage::scrNativeCallContext* ctx)
+{
+    ctx->m_ReturnValue->Int = 2;
+}
+
 void Return1Detour(rage::scrNativeCallContext* ctx)
 {
     ctx->m_ReturnValue->Int = 1;
@@ -90,6 +95,9 @@ void StatGetIntDetour(rage::scrNativeCallContext* ctx)
         goto exit;
     case "MP0_AWD_FACES_OF_DEATH"_J: // Camhedz - Faces Of Death
         outValue->Int = 30;
+        goto exit;
+    case "MP0_ARC_PROPERTY_EARNINGS"_J: // Arcade Earnings
+        outValue->Int = MISC::GET_RANDOM_INT_IN_RANGE(1000000, 2000000);
         goto exit;
     exit:
         ctx->m_ReturnValue->Int = 1;
@@ -173,6 +181,11 @@ void GetPackedStatBoolCodeDetour(rage::scrNativeCallContext* ctx)
     case 28183: // Plushie Princess Tee (incl. Arcade & Penthouse Decoration)
     case 28184: // Plushie Master Tee (incl. Arcade & Penthouse Decoration)
     case 28253: // Grog Mode
+    case 28156: // Arcade Cutscene Watched
+    case 27228: // MCT Dialogue
+    case 27229: // Arcade App Dialogue 1
+    case 27230: // Arcade App Dialogue 2
+    case 27231: // Arcade App Dialogue 3
         ctx->m_ReturnValue->Int = 1;
         return;
     }
@@ -300,20 +313,6 @@ void NetworkSpentJukeboxDetour(rage::scrNativeCallContext* ctx)
     STATS::STAT_SET_INT(statHash, value - amount, TRUE);
 }
 
-void GetNumberOfThreadsRunningTheScriptWithThisHashDetour(rage::scrNativeCallContext* ctx)
-{
-    auto scriptHash = ctx->m_Args[0].Uns;
-
-    if (scriptHash == "am_mp_arcade"_J)
-    {
-        ctx->m_ReturnValue->Int = 1;
-        return;
-    }
-
-    BOOL value = SCRIPT::GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH(scriptHash);
-    ctx->m_ReturnValue->Int = value;
-}
-
 void ApplyHook(rage::scrProgram* program, uint64_t hash, rage::scrNativeHandler detour)
 {
     if (!program)
@@ -336,8 +335,11 @@ void InitNativeTablesDetour(rage::scrProgram* program)
 
     switch (program->m_NameHash)
     {
+    case "am_mp_arcade"_J:
     case "am_mp_arcade_peds"_J:
     case "arcade_seating"_J:
+    case "apparcadebusiness"_J:
+    case "apparcadebusinesshub"_J:
     case "ob_jukebox"_J:
     case "am_mp_arc_cab_manager"_J:
     case "ggsm_arcade"_J:
@@ -354,32 +356,32 @@ void InitNativeTablesDetour(rage::scrProgram* program)
     case "puzzle"_J:
     case "camhedz_arcade"_J:
     {
-        ApplyHook(program, 0x76CD105BCAC6EB9F, Return1Detour);                                        // NETWORK_IS_GAME_IN_PROGRESS
-        ApplyHook(program, 0xAE032CEDCF23C6D5, Return0Detour);                                        // PARTICIPANT_ID_TO_INT
-        ApplyHook(program, 0x95C7A22DBE7AEF4C, Return1Detour);                                        // NETWORK_GET_MAX_NUM_PARTICIPANTS
-        ApplyHook(program, 0x4470BE79F5771783, Return0Detour);                                        // NETWORK_GET_PLAYER_INDEX
-        ApplyHook(program, 0x1C1C92A1CBAE364B, Return0Detour);                                        // NETWORK_GET_PLAYER_INDEX_FROM_PED
-        ApplyHook(program, 0x7206AEB20960CCC8, NetworkIsParticipantActiveDetour);                     // NETWORK_IS_PARTICIPANT_ACTIVE
-        ApplyHook(program, 0x762604C40829DB72, NetworkIsParticipantActiveDetour);                     // NETWORK_IS_PLAYER_ACTIVE
-        ApplyHook(program, 0xCCD470854FB0E643, NetworkIsParticipantActiveDetour);                     // NETWORK_IS_PLAYER_A_PARTICIPANT
-        ApplyHook(program, 0x7E3F74F641EE6B27, GetNetworkTimeDetour);                                 // GET_NETWORK_TIME
-        ApplyHook(program, 0xDF7F16323520B858, StatGetIntDetour);                                     // STAT_GET_INT
-        ApplyHook(program, 0xF249567F2E83E093, StatGetBoolDetour);                                    // STAT_GET_BOOL
-        ApplyHook(program, 0xA6D3C21763E25496, GetPackedStatBoolCodeDetour);                          // GET_PACKED_STAT_BOOL_CODE
-        ApplyHook(program, 0xBC5D9A293974F095, NetworkCreateSynchronizedSceneDetour);                 // NETWORK_CREATE_SYNCHRONISED_SCENE
-        ApplyHook(program, 0x0B94AB707B44E754, NetworkAddPedToSynchronizedSceneDetour);               // NETWORK_ADD_PED_TO_SYNCHRONISED_SCENE
-        ApplyHook(program, 0xDEE175A01A05A2F7, NetworkAddEntityToSynchronizedSceneDetour);            // NETWORK_ADD_ENTITY_TO_SYNCHRONISED_SCENE
-        ApplyHook(program, 0xE7101255AD6F1952, NullsubDetour);                                        // NETWORK_START_SYNCHRONISED_SCENE
-        ApplyHook(program, 0x643DC062EE904FCA, NetworkGetLocalSceneFromNetworkIdDetour);              // NETWORK_GET_LOCAL_SCENE_FROM_NETWORK_ID
-        ApplyHook(program, 0xF2E51EC84D76A2B6, NetworkStopSynchronizedSceneDetour);                   // NETWORK_STOP_SYNCHRONISED_SCENE
-        ApplyHook(program, 0x78D35ABAF71764AD, Return1Detour);                                        // CAN_REGISTER_MISSION_OBJECTS
-        ApplyHook(program, 0xC8D49539708A80B4, Return1Detour);                                        // NETWORK_GET_ENTITY_IS_NETWORKED
-        ApplyHook(program, 0xF093E270C0B6B318, Return1Detour);                                        // NETWORK_REQUEST_CONTROL_OF_ENTITY
-        ApplyHook(program, 0x1B1A446EFA398EB5, Return1Detour);                                        // NETWORK_HAS_CONTROL_OF_ENTITY
-        ApplyHook(program, 0xC18CB5D7A27A2E00, Return0Detour);                                        // NET_GAMESERVER_USE_SERVER_TRANSACTIONS (don't trigger any transactions)
-        ApplyHook(program, 0x0AF5E4A6C74DC312, NetworkCanSpendMoneyDetour);                           // NETWORK_CAN_SPEND_MONEY
-        ApplyHook(program, 0x4EFA5A2F877A4580, NetworkSpentJukeboxDetour);                            // NETWORK_SPENT_JUKEBOX
-        ApplyHook(program, 0x486FF5D06E9659F1, GetNumberOfThreadsRunningTheScriptWithThisHashDetour); // GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH
+        ApplyHook(program, 0xDFF16B5B12604EFF, Return2Detour);                             // NETWORK_GET_SCRIPT_STATUS
+        ApplyHook(program, 0x76CD105BCAC6EB9F, Return1Detour);                             // NETWORK_IS_GAME_IN_PROGRESS
+        ApplyHook(program, 0xAE032CEDCF23C6D5, Return0Detour);                             // PARTICIPANT_ID_TO_INT
+        ApplyHook(program, 0x95C7A22DBE7AEF4C, Return1Detour);                             // NETWORK_GET_MAX_NUM_PARTICIPANTS
+        ApplyHook(program, 0x4470BE79F5771783, Return0Detour);                             // NETWORK_GET_PLAYER_INDEX
+        ApplyHook(program, 0x1C1C92A1CBAE364B, Return0Detour);                             // NETWORK_GET_PLAYER_INDEX_FROM_PED
+        ApplyHook(program, 0x7206AEB20960CCC8, NetworkIsParticipantActiveDetour);          // NETWORK_IS_PARTICIPANT_ACTIVE
+        ApplyHook(program, 0x762604C40829DB72, NetworkIsParticipantActiveDetour);          // NETWORK_IS_PLAYER_ACTIVE
+        ApplyHook(program, 0xCCD470854FB0E643, NetworkIsParticipantActiveDetour);          // NETWORK_IS_PLAYER_A_PARTICIPANT
+        ApplyHook(program, 0x7E3F74F641EE6B27, GetNetworkTimeDetour);                      // GET_NETWORK_TIME
+        ApplyHook(program, 0xDF7F16323520B858, StatGetIntDetour);                          // STAT_GET_INT
+        ApplyHook(program, 0xF249567F2E83E093, StatGetBoolDetour);                         // STAT_GET_BOOL
+        ApplyHook(program, 0xA6D3C21763E25496, GetPackedStatBoolCodeDetour);               // GET_PACKED_STAT_BOOL_CODE
+        ApplyHook(program, 0xBC5D9A293974F095, NetworkCreateSynchronizedSceneDetour);      // NETWORK_CREATE_SYNCHRONISED_SCENE
+        ApplyHook(program, 0x0B94AB707B44E754, NetworkAddPedToSynchronizedSceneDetour);    // NETWORK_ADD_PED_TO_SYNCHRONISED_SCENE
+        ApplyHook(program, 0xDEE175A01A05A2F7, NetworkAddEntityToSynchronizedSceneDetour); // NETWORK_ADD_ENTITY_TO_SYNCHRONISED_SCENE
+        ApplyHook(program, 0xE7101255AD6F1952, NullsubDetour);                             // NETWORK_START_SYNCHRONISED_SCENE
+        ApplyHook(program, 0x643DC062EE904FCA, NetworkGetLocalSceneFromNetworkIdDetour);   // NETWORK_GET_LOCAL_SCENE_FROM_NETWORK_ID
+        ApplyHook(program, 0xF2E51EC84D76A2B6, NetworkStopSynchronizedSceneDetour);        // NETWORK_STOP_SYNCHRONISED_SCENE
+        ApplyHook(program, 0x78D35ABAF71764AD, Return1Detour);                             // CAN_REGISTER_MISSION_OBJECTS
+        ApplyHook(program, 0xC8D49539708A80B4, Return1Detour);                             // NETWORK_GET_ENTITY_IS_NETWORKED
+        ApplyHook(program, 0xF093E270C0B6B318, Return1Detour);                             // NETWORK_REQUEST_CONTROL_OF_ENTITY
+        ApplyHook(program, 0x1B1A446EFA398EB5, Return1Detour);                             // NETWORK_HAS_CONTROL_OF_ENTITY
+        ApplyHook(program, 0xC18CB5D7A27A2E00, Return0Detour);                             // NET_GAMESERVER_USE_SERVER_TRANSACTIONS (don't trigger any transactions)
+        ApplyHook(program, 0x0AF5E4A6C74DC312, NetworkCanSpendMoneyDetour);                // NETWORK_CAN_SPEND_MONEY
+        ApplyHook(program, 0x4EFA5A2F877A4580, NetworkSpentJukeboxDetour);                 // NETWORK_SPENT_JUKEBOX
         break;
     }
     }
